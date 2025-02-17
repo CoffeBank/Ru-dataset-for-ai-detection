@@ -14,26 +14,23 @@ OpenAI.api_key = var_name
 dp_rewrite = "Ты — помощник, который переписывает текст, сохраняя его структуру и смысл. Перепиши следующий текст, значительно изменив структуру, стиль и формулировки. Сохрани основную мысль и фактическое содержание, но переформулируй каждое предложение так, чтобы конечная версия была достаточно отлична от исходной."
 lp_rewrite = "Ты — помощник, который переписывает текст, сохраняя его структуру и смысл. Замени некоторые слова синонимами и перефразируй предложения, но не сокращай и не добавляй новую информацию. Количество слов в изменённом тексте должно остаться таким же."
 
-# Выводим поле text для каждого элемента
-# for item in data[:1]:
-#     print(item.get("text", "[Нет текста]"))
+
+def generate_paragraph(prompt, rewrite_mode="dp", model="o1-mini"):
+
+    instruction = dp_rewrite if rewrite_mode == "dp" else lp_rewrite
+    full_prompt = f"{instruction}\n\nТекст:\n{prompt}"
     
-def generate_paragraph(prompt, model="gpt-4o-mini", max_tokens=5000, temperature=0.5):
     response = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": dp_rewrite},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": full_prompt}
         ],
-        max_tokens=max_tokens,
-        temperature=temperature,
-        n=1
     )
     answer = response.choices[0].message.content.strip()
     return answer
 
 def create_dataset(start_paragraph=0, end_paragraph=10, output_file="dataset.json"):
-    with open("output.json", "r", encoding="utf-8") as file:
+    with open("orig_texts.json", "r", encoding="utf-8") as file:
         data = json.load(file)
     
     dataset = []
@@ -58,7 +55,7 @@ def create_dataset(start_paragraph=0, end_paragraph=10, output_file="dataset.jso
             "id": start_id + (i - start_paragraph),
             "text": text,
             "source": "ai",
-            "dataset": "sm test"
+            "dataset": "SM DP chatGPT o1-mini"
         }
         dataset.append(entry)
         
@@ -70,4 +67,4 @@ def create_dataset(start_paragraph=0, end_paragraph=10, output_file="dataset.jso
     print(f"Done! Added {end_paragraph - start_paragraph} new entries to file '{output_file}'.")
 
 if __name__ == "__main__":
-    create_dataset(start_paragraph=0, end_paragraph=25, output_file="small_dataset.json")
+    create_dataset(start_paragraph=5, end_paragraph=100, output_file="small_dataset.json")

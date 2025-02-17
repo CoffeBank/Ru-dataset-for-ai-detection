@@ -7,51 +7,41 @@ def load_json(filename):
         data = json.load(f)
     return data
 
-def summarize_by_source_and_dataset(data):
-    summary = {}
+def summarize_datasets_and_sources(data):
+    dataset_counts = {}
+    ai_human_ratio = {"AI": 0, "Human": 0}
+    
     for record in data:
-        source = record.get("source", "Unknown")
         dataset = record.get("dataset", "Unknown")
+        source = record.get("source", "Unknown")
         
-        if source not in summary:
-            summary[source] = {}
-        summary[source][dataset] = summary[source].get(dataset, 0) + 1
-    return summary
+        dataset_counts[dataset] = dataset_counts.get(dataset, 0) + 1
+        
+        if "ai" in source.lower():
+            ai_human_ratio["AI"] += 1
+        else:
+            ai_human_ratio["Human"] += 1
+    
+    return dataset_counts, ai_human_ratio
 
-def plot_grouped_bar_chart(summary): 
-    sources = sorted(summary.keys())
-    datasets = sorted({ds for source in summary for ds in summary[source].keys()})
+def print_statistics(dataset_counts, ai_human_ratio):
+    print("\nDataset statistics:")
+    print("-" * 40)
+    for dataset, count in sorted(dataset_counts.items()):
+        print(f"{dataset}: {count} records")
     
-    x = np.arange(len(sources))
-    total_width = 0.8
-    bar_width = total_width / len(datasets)
-    
-    cmap = plt.get_cmap("tab10")
-    colors = {dataset: cmap(i) for i, dataset in enumerate(datasets)}
-    
-    plt.figure(figsize=(10, 6))
-    
-    for i, dataset in enumerate(datasets):
-        counts = []
-        for source in sources:
-            count = summary[source].get(dataset, 0)
-            counts.append(count)
-        positions = x - total_width/2 + i*bar_width + bar_width/2
-        plt.bar(positions, counts, width=bar_width, color=colors[dataset], label=dataset)
-    
-    plt.xlabel("Source")
-    plt.ylabel("Number of records")
-    plt.title("Comparison of 'source' by 'dataset'")
-    plt.xticks(x, sources)
-    plt.legend(title="Dataset")
-    plt.tight_layout()
-    plt.show()
+    print("\nAI/Human content ratio:")
+    print("-" * 40)
+    total = sum(ai_human_ratio.values())
+    for source, count in ai_human_ratio.items():
+        percentage = (count / total) * 100 if total > 0 else 0
+        print(f"{source}: {count} records ({percentage:.1f}%)")
 
 def main():
     filename = 'ru_detection_dataset.json'
     data = load_json(filename)
-    summary = summarize_by_source_and_dataset(data)
-    plot_grouped_bar_chart(summary)
+    dataset_counts, ai_human_ratio = summarize_datasets_and_sources(data)
+    print_statistics(dataset_counts, ai_human_ratio)
 
 if __name__ == '__main__':
     main()
