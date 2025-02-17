@@ -46,5 +46,5 @@ def process_json_files(directory):
         except Exception as e:
             print(f"Error processing file {json_file}: {str(e)}")
 
-directory = "full_sets/ai"
+directory = "full_sets/human"
 process_json_files(directory)
